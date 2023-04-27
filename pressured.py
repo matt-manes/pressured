@@ -15,7 +15,7 @@ class Pressured(DataBased):
     def init_table(self):
         """Create pressure table."""
         self.create_table(
-            "readings", ["systolic int", "diastolic int", "pulse int" "date timestamp"]
+            "readings", ["systolic int", "diastolic int", "pulse int", "date timestamp"]
         )
 
     def add_reading(self, systolic: int, diastolic: int, pulse: int):
