@@ -18,6 +18,7 @@ def get_reading_parser() -> ArgShellParser:
     parser.add_argument(
         "diastolic", type=int, help=""" The bottom number of the reading. """
     )
+    parser.add_argument("-p", "--pulse", type=int, default=0, help=""" Pulse rate. """)
     return parser
 
 
