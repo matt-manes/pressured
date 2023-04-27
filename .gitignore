@@ -1,0 +1,8 @@
+__pycache__
+.coverage
+.vscode
+.pytest_cache
+*.db*
+*.log*
+*.txt
+*scratch*
