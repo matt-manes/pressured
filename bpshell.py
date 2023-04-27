@@ -18,6 +18,7 @@ def get_reading_parser() -> ArgShellParser:
     parser.add_argument(
         "diastolic", type=int, help=""" The bottom number of the reading. """
     )
+    parser.add_argument("-p", "--pulse", type=int, default=0, help=""" Pulse rate. """)
     return parser
 
 
@@ -58,7 +59,7 @@ class BPShell(DBManager):
     def do_reading(self, args: Namespace):
         """Add a reading to the database."""
         with Pressured(self.dbpath) as db:
-            db.add_reading(args.systolic, args.diastolic)
+            db.add_reading(args.systolic, args.diastolic, args.pulse)
 
     @with_parser(get_plot_parser, [convert_to_datetime])
     def do_plot(self, args: Namespace):
