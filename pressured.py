@@ -15,12 +15,22 @@ class Pressured(DataBased):
     def init_table(self):
         """Create pressure table."""
         self.create_table(
-            "readings", ["systolic int", "diastolic int", "pulse int", "date timestamp"]
+            "readings",
+            [
+                "systolic int",
+                "diastolic int",
+                "pulse int",
+                "date timestamp",
+                "pulse_pressure int",
+            ],
         )
 
     def add_reading(self, systolic: int, diastolic: int, pulse: int):
         """Add blood pressure reading to database."""
-        self.add_row("readings", (systolic, diastolic, pulse, datetime.now()))
+        self.add_row(
+            "readings",
+            (systolic, diastolic, pulse, datetime.now(), systolic - diastolic),
+        )
 
     def get_readings(
         self, start_date: datetime | None = None, stop_date: datetime | None = None
