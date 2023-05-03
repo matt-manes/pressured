@@ -22,7 +22,7 @@ def get_reading_parser() -> ArgShellParser:
     return parser
 
 
-def get_plot_parser() -> ArgShellParser:
+def get_date_parser() -> ArgShellParser:
     parser = ArgShellParser()
     parser.add_argument(
         "--start",
@@ -61,7 +61,14 @@ class BPShell(DBManager):
         with Pressured(self.dbpath) as db:
             db.add_reading(args.systolic, args.diastolic, args.pulse)
 
-    @with_parser(get_plot_parser, [convert_to_datetime])
+    @with_parser(get_date_parser, [convert_to_datetime])
+    def do_averages(self, args: Namespace):
+        """Display table averages."""
+        with Pressured(self.dbpath) as db:
+            averages = db.get_averages(args.start, args.stop)
+        print(Pressured.data_to_string([averages]))
+
+    @with_parser(get_date_parser, [convert_to_datetime])
     def do_plot(self, args: Namespace):
         """Plot readings data."""
         fig = plotly.graph_objects.Figure()
