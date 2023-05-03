@@ -54,11 +54,12 @@ class Pressured(DataBased):
 
     def get_averages(
         self, start_date: datetime | None = None, stop_date: datetime | None = None
-    ) -> list[int, int]:
-        """Returns a two element list containing the average systolic and average diastolic numbers.
+    ) -> dict:
+        """Returns a dictionary of `readings` table averages.
 
         Averaging range can be specified with one or both 'start_date' and 'stop_date' params."""
         readings = self.get_readings(start_date, stop_date)
-        averages = (readings["systolic"].mean(), readings["diastolic"].mean())
-        averages = [round(average) for average in averages]
+        averages = {
+            col: round(readings[col].mean()) for col in readings if col != "date"
+        }
         return averages
