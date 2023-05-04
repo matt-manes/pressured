@@ -53,7 +53,7 @@ def convert_to_datetime(args: Namespace) -> Namespace:
 class BPShell(DBShell):
     intro = "Starting bpshell (enter help or ? for command info)..."
     prompt = "bpshell>"
-    dbpath = None  # root / "blood_pressure.db"
+    dbpath = root / "blood_pressure.db"
 
     @with_parser(get_reading_parser)
     def do_reading(self, args: Namespace):
@@ -76,8 +76,8 @@ class BPShell(DBShell):
         with Pressured(self.dbpath) as db:
             readings = db.get_readings(args.start, args.stop)
             averages = db.get_averages(args.start, args.stop)
-        sys_average = [averages[0]] * len(readings)
-        dys_average = [averages[1]] * len(readings)
+        sys_average = [averages["systolic"]] * len(readings)
+        dys_average = [averages["diastolic"]] * len(readings)
         pulse_pressure = readings["systolic"] - readings["diastolic"]
         annotation_x = (
             readings["date"].min()
@@ -98,7 +98,7 @@ class BPShell(DBShell):
         fig.add_annotation(
             x=annotation_x,
             y=readings["diastolic"].max(),
-            text=f"Diastolic min: {readings['diastolic'].min()} diastolic max: {readings['diastolic'].max()}",
+            text=f"Diastolic min: {readings['diastolic'].min()} Diastolic max: {readings['diastolic'].max()}",
         )
         fig.add_trace(
             Scatter(x=readings["date"], y=sys_average, name="Average Systolic")
