@@ -2,7 +2,7 @@ from datetime import datetime
 
 import plotly.graph_objects
 from argshell import ArgShellParser, Namespace, with_parser
-from databased import DataBased, DBManager, dbparsers
+from databased import DataBased, DBShell, dbparsers
 from pathier import Pathier
 
 from pressured import Pressured
@@ -50,7 +50,7 @@ def convert_to_datetime(args: Namespace) -> Namespace:
     return args
 
 
-class BPShell(DBManager):
+class BPShell(DBShell):
     intro = "Starting bpshell (enter help or ? for command info)..."
     prompt = "bpshell>"
     dbpath = None  # root / "blood_pressure.db"
@@ -144,5 +144,6 @@ class BPShell(DBManager):
 
 
 if __name__ == "__main__":
+    # Create db file if it doesn't exist before BPShell tries to scan for one.
     Pressured()
     BPShell().cmdloop()
