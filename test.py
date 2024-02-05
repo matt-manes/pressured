@@ -1,25 +1,23 @@
 import random
-import time
 from datetime import datetime
 
 from pathier import Pathier
-from printbuddies import Spinner
 
 from pressured import Pressured
 
 root = Pathier(__file__).parent
 testdb_path = root / "test.db"
 
-spinner = Spinner()
-
 
 def test_add_reading():
     if not testdb_path.exists():
         with Pressured(testdb_path) as db:
             for _ in range(100):
-                db.add_reading(random.randint(120, 160), random.randint(50, 90))
-                spinner.display()
-                time.sleep(1)
+                db.add_reading(
+                    random.randint(120, 160),
+                    random.randint(50, 90),
+                    random.randint(60, 90),
+                )
 
 
 def test_get_readings():
@@ -33,7 +31,6 @@ def test_get_readings():
 def test_get_averages():
     with Pressured(testdb_path) as db:
         averages = db.get_averages()
-        assert averages[0] > 120
-        assert averages[0] < 160
-        assert averages[1] > 50
-        assert averages[1] < 90
+        assert 120 < averages["systolic"] < 160
+        assert 50 < averages["diastolic"] < 90
+        assert 60 < averages["pulse"] < 90

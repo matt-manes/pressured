@@ -1,13 +1,13 @@
 from datetime import datetime
 
-from databased import DataBased
+from databased import Databased
 from pandas import DataFrame
 from pathier import Pathier
 
 root = Pathier(__file__).parent
 
 
-class Pressured(DataBased):
+class Pressured(Databased):
     def __init__(self, dbpath: Pathier = root / "blood_pressure.db"):
         super().__init__(dbpath)
         self.init_table()
@@ -16,50 +16,58 @@ class Pressured(DataBased):
         """Create pressure table."""
         self.create_table(
             "readings",
-            [
-                "systolic int",
-                "diastolic int",
-                "pulse int",
-                "date timestamp",
-                "pulse_pressure int",
-            ],
+            "systolic int",
+            "diastolic int",
+            "pulse int",
+            "date timestamp",
+            "pulse_pressure int",
         )
 
     def add_reading(self, systolic: int, diastolic: int, pulse: int):
         """Add blood pressure reading to database."""
-        self.add_row(
+        self.insert(
             "readings",
-            (systolic, diastolic, pulse, datetime.now(), systolic - diastolic),
+            ("systolic", "diastolic", "pulse", "date", "pulse_pressure"),
+            [(systolic, diastolic, pulse, datetime.now(), systolic - diastolic)],
         )
 
+    def _get_date_condition(self, start: datetime, stop: datetime) -> str:
+        return f"date BETWEEN '{start}' AND '{stop}'"
+
     def get_readings(
-        self, start_date: datetime | None = None, stop_date: datetime | None = None
+        self,
+        start_date: datetime = datetime.min,
+        stop_date: datetime = datetime.max,
     ) -> DataFrame:
         """Returns readings as a DataFrame.
         The date range can be narrowed through 'start_date' and/or 'stop_date'."""
-        if not start_date and not stop_date:
-            readings = self.get_rows("readings", return_as_dataframe=True)
-        else:
-            query = "SELECT * FROM readings WHERE"
-            if start_date and stop_date:
-                condition = f"'{start_date}' < date and date < '{stop_date}'"
-            elif start_date:
-                condition = f"'{start_date}' < date"
-            elif stop_date:
-                condition = f"date < '{stop_date}'"
-            readings = self.query(f"{query} {condition};")
-            readings = [self._get_dict("readings", reading) for reading in readings]
-            readings = DataFrame(readings)
-        return readings
+        return DataFrame(
+            self.select(
+                "readings", where=self._get_date_condition(start_date, stop_date)
+            )
+        )
 
     def get_averages(
-        self, start_date: datetime | None = None, stop_date: datetime | None = None
+        self,
+        start_date: datetime = datetime.min,
+        stop_date: datetime = datetime.max,
     ) -> dict:
-        """Returns a dictionary of `readings` table averages.
+        """Returns averages between `start_date` and `stop_date` for:
 
-        Averaging range can be specified with one or both 'start_date' and 'stop_date' params."""
-        readings = self.get_readings(start_date, stop_date)
-        averages = {
-            col: round(readings[col].mean()) for col in readings if col != "date"
-        }
-        return averages
+        'systolic'
+
+        'diastolic'
+
+        'pulse'
+
+        'pulse_pressure'
+        """
+        calc = lambda s: f"ROUND(AVG({s}), 2) AS {s}"
+        columns = [
+            column for column in self.get_columns("readings") if column != "date"
+        ]
+        return self.select(
+            "readings",
+            columns=list(map(calc, columns)),
+            where=self._get_date_condition(start_date, stop_date),
+        )[0]

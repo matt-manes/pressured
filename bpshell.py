@@ -2,7 +2,7 @@ from datetime import datetime
 
 import plotly.graph_objects
 from argshell import ArgShellParser, Namespace, with_parser
-from databased import DataBased, DBShell, dbparsers
+from databased.dbshell import DBShell
 from pathier import Pathier
 
 from pressured import Pressured
@@ -18,7 +18,9 @@ def get_reading_parser() -> ArgShellParser:
     parser.add_argument(
         "diastolic", type=int, help=""" The bottom number of the reading. """
     )
-    parser.add_argument("-p", "--pulse", type=int, default=0, help=""" Pulse rate. """)
+    parser.add_argument(
+        "pulse", nargs="?", type=int, default=0, help=""" Pulse rate. """
+    )
     return parser
 
 
@@ -27,14 +29,14 @@ def get_date_parser() -> ArgShellParser:
     parser.add_argument(
         "--start",
         type=str,
-        default=None,
+        default=datetime.min,
         help=""" Don't plot data before this date.
         Required format: month_digit/day_digit/4_digit_year""",
     )
     parser.add_argument(
         "--stop",
         type=str,
-        default=None,
+        default=datetime.max,
         help=""" Don't plot data after this date.
         Required format: month_digit/day_digit/4_digit_year""",
     )
@@ -44,16 +46,20 @@ def get_date_parser() -> ArgShellParser:
 def convert_to_datetime(args: Namespace) -> Namespace:
     convert = lambda date: datetime.strptime(date, "%m/%d/%Y")
     if args.start:
-        args.start = convert(args.start)
+        args.start = (
+            convert(args.start) if not isinstance(args.start, datetime) else args.start
+        )
     if args.stop:
-        args.stop = convert(args.stop)
+        args.stop = (
+            convert(args.stop) if not isinstance(args.stop, datetime) else args.stop
+        )
     return args
 
 
 class BPShell(DBShell):
     intro = "Starting bpshell (enter help or ? for command info)..."
     prompt = "bpshell>"
-    dbpath = root / "blood_pressure.db"
+    _dbpath = root / "blood_pressure.db"
 
     @with_parser(get_reading_parser)
     def do_reading(self, args: Namespace):
@@ -66,7 +72,7 @@ class BPShell(DBShell):
         """Display table averages."""
         with Pressured(self.dbpath) as db:
             averages = db.get_averages(args.start, args.stop)
-        print(Pressured.data_to_string([averages]))
+        print(Pressured.to_grid([averages]))
 
     @with_parser(get_date_parser, [convert_to_datetime])
     def do_plot(self, args: Namespace):
