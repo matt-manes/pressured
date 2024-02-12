@@ -65,7 +65,22 @@ class BPShell(DBShell):
     def do_reading(self, args: Namespace):
         """Add a reading to the database."""
         with Pressured(self.dbpath) as db:
+            old_averages = db.get_averages()
             db.add_reading(args.systolic, args.diastolic, args.pulse)
+            new_averages = db.get_averages()
+            pchange = lambda n1, n2: ((n2 - n1) / n1) * 100
+            changes = {}
+            for key in old_averages:
+                changes[key] = f"{pchange(old_averages[key], new_averages[key]):.2f}%"
+        print(
+            Pressured.to_grid(
+                [
+                    {"context": "pre-reading"} | old_averages,
+                    {"context": "post-reading"} | new_averages,
+                    {"context": "percent change"} | changes,
+                ]
+            )
+        )
 
     @with_parser(get_date_parser, [convert_to_datetime])
     def do_averages(self, args: Namespace):
